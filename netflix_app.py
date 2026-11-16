@@ -262,6 +262,29 @@ TEMPLATE = """
       <p class="empty">No watch activity yet.</p>
     {% endif %}
   </div>
+    <div class="card">
+    <h2>Who watched which TV shows ({{ tv_rows|length }})</h2>
+    {% if tv_rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>TV Show</th><th>Account ID</th><th>Email</th></tr>
+          </thead>
+          <tbody>
+            {% for r in tv_rows %}
+              <tr>
+                <td>{{ r.tv_show_title }}</td>
+                <td>{{ r.account_id }}</td>
+                <td>{{ r.email }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No TV watch activity yet.</p>
+    {% endif %}
+  </div>
   {% endif %}
 </main>
 </body>
@@ -352,8 +375,17 @@ def analytics():
     except sqlite3.Error as e:
         flash(f"Could not load analytics: {e}")
         rows = []
+    try:
+        tv_rows = db.execute(
+            "SELECT account_id, email, tv_show_title "
+            "FROM netflix_watched_tv_results "
+            "ORDER BY tv_show_title, email"
+        ).fetchall()
+    except sqlite3.Error as e:
+        flash(f"Could not load TV analytics: {e}")
+        tv_rows = []
     return render_template_string(TEMPLATE, tables=get_tables(db), page="Analytics",
-                                  view="analytics", rows=rows)
+                                  view="analytics", rows=rows, tv_rows=tv_rows)
 
 
 @app.route("/<page>/delete/<int:rowid>", methods=["POST"])
