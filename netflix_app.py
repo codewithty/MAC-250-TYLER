@@ -21,7 +21,7 @@ app = Flask(__name__)
 app.secret_key = "change-me"
 
 
-# ---------- database helpers ----------
+# ---------- DB functions ----------
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
@@ -119,7 +119,7 @@ def describe(db, table):
     return {"table": table, "auto_pk": auto_pk, "fields": fields}
 
 
-# ---------- template ----------
+# ---------- HTML ----------
 TEMPLATE = """
 <!doctype html>
 <html lang="en">
