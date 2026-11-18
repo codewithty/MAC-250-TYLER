@@ -285,6 +285,29 @@ TEMPLATE = """
       <p class="empty">No TV watch activity yet.</p>
     {% endif %}
   </div>
+  <div class="card">
+    <h2>Profiles per subscriber ({{ profile_rows|length }})</h2>
+    {% if profile_rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Account ID</th><th>Subscriber Email</th><th>Total Profiles</th></tr>
+          </thead>
+          <tbody>
+            {% for r in profile_rows %}
+              <tr>
+                <td>{{ r.account_id }}</td>
+                <td>{{ r.subscriber_email }}</td>
+                <td>{{ r.total_profiles }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No subscribers yet.</p>
+    {% endif %}
+  </div>
   {% endif %}
 </main>
 </body>
@@ -384,8 +407,29 @@ def analytics():
     except sqlite3.Error as e:
         flash(f"Could not load TV analytics: {e}")
         tv_rows = []
+    try:
+        profile_rows = db.execute(
+            """
+            SELECT
+                a.id AS account_id,
+                a.email AS subscriber_email,
+                COUNT(DISTINCT p.profile_id) AS total_profiles
+            FROM account a
+            LEFT JOIN profile p
+                ON a.id = p.account_id
+            GROUP BY
+                a.id,
+                a.email
+            ORDER BY
+                total_profiles DESC
+            """
+        ).fetchall()
+    except sqlite3.Error as e:
+        flash(f"Could not load profiles per subscriber: {e}")
+        profile_rows = []
     return render_template_string(TEMPLATE, tables=get_tables(db), page="Analytics",
-                                  view="analytics", rows=rows, tv_rows=tv_rows)
+                                  view="analytics", rows=rows, tv_rows=tv_rows,
+                                  profile_rows=profile_rows)
 
 
 @app.route("/<page>/delete/<int:rowid>", methods=["POST"])
